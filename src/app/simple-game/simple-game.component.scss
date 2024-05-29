@@ -1,0 +1,21 @@
+.dice-sprite {
+    height: 100px;
+    width: 100px;
+    text-align: center;
+    align-content: center;
+    margin: 5px;
+    border: 5px solid black;
+    border-radius: 10px;
+    font-size: 60px;
+    padding: 5px;
+    color: black;
+    background-color: white;
+    cursor: pointer;
+    box-shadow: rgba(100, 100, 100, 0.25) 0px 54px 55px, rgba(100, 100, 100, 0.12) 0px -12px 30px, rgba(100, 100, 100, 0.12) 0px 4px 6px, rgba(100, 100, 100, 0.17) 0px 12px 13px, rgba(100, 100, 100, 0.09) 0px -3px 5px;
+}
+
+.locked-dice-sprite {
+    background-color: lightgreen;
+    margin-top: -5px;
+}
+

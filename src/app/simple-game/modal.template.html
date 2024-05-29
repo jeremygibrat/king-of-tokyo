@@ -1,0 +1,10 @@
+<div class="modal-header">
+    <h4 class="modal-title">{{ name }}</h4>
+</div>
+<div class="modal-body">
+    <p>Vous avez subi des dégat, voulez vous quitter la ville ? </p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">Rester</button>
+    <button type="button" class="btn btn-danger" (click)="activeModal.close()">Quitter</button>
+</div>

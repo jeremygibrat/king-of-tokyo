@@ -1,0 +1,153 @@
+<div class="container-fluid">
+    <!-- Creation d'une partie (selection des joueurs) -->
+    <section *ngIf="!gameInstance.isGameStarted">
+        <h3>Jouez un Monstre gigantesque qui détruit tout sur son passage !</h3>
+        <p>
+            Lancez les dés, faites les meilleures combinaisons possibles afin de vous soigner, d’attaquer, d’acheter des
+            cartes ou de gagner des Points de Victoire. <br />
+            À vous d’adapter la meilleure stratégie pour devenir le King of Tokyo au bon moment et attaquer tous vos
+            adversaires en même temps. <br />
+            <b>Le premier qui totalise 20 Points de Victoire remporte la partie…</b><br />
+            <b>Le dernier à rester en vie aussi !</b><br />
+        </p>
+        <form [formGroup]="playersForm">
+            <h3>Joueurs</h3>
+            <div formArrayName="player">
+                <div *ngFor="let item of playerFormArray.controls; let i = index" class="row my-1">
+                    <div class="col"><input class="form-control" [formControlName]="i" placeholder="Name"></div>
+                    <div class="col"><button class="btn btn-sm btn-primary" (click)="removePlayer(i)"
+                            *ngIf="playerFormArray.length > gameConfig.minPlayers">Retirer</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-primary my-3" (click)="addPlayer()"
+                *ngIf="playerFormArray.length < gameConfig.maxPlayers">Ajouter un joueur</button>
+        </form>
+        <button class="btn btn-lg btn-primary my-3" (click)="startGame()" [disabled]="!playersForm.valid">
+            Commencez à jouer
+        </button>
+    </section>
+
+    <!-- Instance d'une partie -->
+    <section *ngIf="gameInstance.isGameStarted && gameInstance.winners.length == 0">
+        <div class="row">
+            <section class="col-3">
+                <!-- Player -->
+                <div *ngFor="let player of gameInstance.players; let i = index;">
+                    <article class="card bg-primary" *ngIf="player.life > 0 && player.rank === 0">
+                        <div class="card-header">
+                            <h2>{{ player.name }}</h2>
+                        </div>
+                        <div class="card-body">
+                            <h4 *ngIf="player.cityName">Chef de {{ player.cityName }}</h4>
+                            <h4>{{player.life}} / {{player.maxLife}} ♡</h4>
+                            <h4>{{player.points}} / {{gameConfig.requiredVictoryPoints}} ★</h4>
+                            <h4>{{player.energy}} $</h4>
+
+                            <br/> 
+
+                            <div *ngIf="player.cards.length > 0">
+                                <p><b class="form-label">Cartes possédées:</b></p>
+                                <ul>
+                                    <li *ngFor="let card of player.cards">
+                                        <button class="btn btn-sm btn-primary my-1"
+                                            (click)="playCard(card)">{{card.name}}</button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-footer" *ngIf="player.rank === 0" class="card-footer">
+                            <button (click)="rollDices()" class="btn btn-secondary my-1"
+                                *ngIf="gameInstance.currentTurn.rollsRemaining > 1">Lancer les dés</button>
+                            <button (click)="endRoll()" class="btn btn-light my-1"
+                                *ngIf="gameInstance.currentTurn.rollsRemaining < gameInstance.currentTurn.maxRolls && gameInstance.currentTurn.rollsRemaining > 0">Résoudre
+                                les dés</button>
+                            <button (click)="endTurn()" class="btn btn-light my-1"
+                                *ngIf="gameInstance.currentTurn.rollsRemaining === 0">Terminer le tour</button>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Score des autres joueurs -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-dark">
+                        <tbody>
+                            <tr *ngFor="let player of gameInstance.players; let i = index;">
+                                <ng-container *ngIf="player.rank != 0">
+                                    <td>
+                                        <b>{{player.name}}</b>
+                                        <div>
+                                            <span *ngIf="player.life > 0">{{player.life}} ♡ / {{player.points}} ★ /
+                                                {{player.energy}} $</span>
+                                            <span *ngIf="player.life <= 0">☠</span>
+                                        </div>
+                                    </td>
+                                    <td>{{player.cityName}}</td>
+                                </ng-container>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Resultats du joueur et Magasin -->
+            <section class="col-9">
+                <div class="row">
+                    <article
+                        *ngIf="gameInstance.currentTurn.rollsRemaining != 0 && gameInstance.currentTurn.rollsRemaining != gameInstance.currentTurn.maxRolls">
+                        <h2>Tirage</h2>
+                        <section class="row">
+                            <div class="col" *ngFor="let dice of gameInstance.currentTurn.diceRolls">
+                                <p class="dice-sprite"
+                                    [ngClass]="{'locked-dice-sprite' : dice.locked && gameInstance.currentTurn.rollsRemaining > 0}"
+                                    (click)="lockDice(dice)">{{dice.label}}</p>
+                            </div>
+                        </section>
+                    </article>
+                    <article *ngIf="gameInstance.currentTurn.rollsRemaining === 0">
+                        <section>
+                            <h2>Resultats</h2>
+                            <ul>
+                                <li *ngFor="let event of gameInstance.currentTurn.results">{{event}}</li>
+                                <li *ngIf="gameInstance.currentTurn.results.length === 0">Aucun effet activé</li>
+                            </ul>
+                        </section>
+                    </article>
+                </div>
+
+                <div class="row py-5" *ngIf="gameInstance.currentTurn.rollsRemaining === 0">
+                    <h3>Magasin de cartes</h3>
+                    <div class="col" *ngFor="let card of gameInstance.cardsToBuy">
+                        <article class="card card-sm text-white border-secondary mb-3" style="width: 250px;">
+                            <div class="card-header">
+                                <h4>{{ card.name }}</h4>
+                                <small>{{ card.type }}</small>
+                            </div>
+                            <div class="card-body">
+                                <p>{{ card.description }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <button class="btn btn-sm btn-primary" [disabled]="!hasEnoughMoney(card.price)"
+                                    *ngIf="gameInstance.currentTurn.rollsRemaining === 0"
+                                    (click)="buyCard(card)">Acheter pour {{card.price}}$
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="col" *ngIf="gameInstance.currentTurn.rollsRemaining === 0">
+                        <button class="btn btn-sm btn-primary" (click)="refreshShopCards()"
+                            [disabled]="!hasEnoughMoney(gameConfig.priceToClearShop)">
+                            Renouveler cartes pour {{gameConfig.priceToClearShop}}$
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+
+    <section *ngIf="gameInstance.winners.length > 0">
+        <h1>{{gameInstance.winners | json}} a gagné la partie</h1>
+        <button (click)="startGame()" class="btn btn-secondary">Lancer une nouvelle partie </button>
+    </section>
+
+</div>
